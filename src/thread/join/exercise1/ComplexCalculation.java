@@ -1,29 +1,43 @@
 package thread.join.exercise1;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public class ComplexCalculation {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+
+        ComplexCalculation calculation = new ComplexCalculation();
+        BigInteger result = calculation.calculateResult(new BigInteger("2"),
+                new BigInteger("3"),
+                new BigInteger("1"),
+                new BigInteger("3"));
+        System.out.println(result);
 
     }
 
     public BigInteger calculateResult(BigInteger base1,
                                       BigInteger power1,
                                       BigInteger base2,
-                                      BigInteger power2) {
-        BigInteger result = BigInteger.ONE;
-        /*
-            Calculate result = ( base1 ^ power1 ) + (base2 ^ power2).
-            Where each calculation in (..) is calculated on a different thread
-        */
-        return result;
+                                      BigInteger power2) throws InterruptedException {
+
+        List<PowerCalculatingThread> threads = List.of(new PowerCalculatingThread(base1, power1),
+                new PowerCalculatingThread(base2, power2));
+
+        threads.forEach(Thread::start);
+
+        for (PowerCalculatingThread thread : threads) {
+            thread.join();
+        }
+
+        return threads.get(0).getResult().add(threads.get(1).getResult());
     }
 
     private static class PowerCalculatingThread extends Thread {
+
         private BigInteger result = BigInteger.ONE;
-        private BigInteger base;
-        private BigInteger power;
+        private final BigInteger base;
+        private final BigInteger power;
 
         public PowerCalculatingThread(BigInteger base, BigInteger power) {
             this.base = base;
@@ -32,9 +46,10 @@ public class ComplexCalculation {
 
         @Override
         public void run() {
-           /*
-           Implement the calculation of result = base ^ power
-           */
+            for (BigInteger i = BigInteger.ZERO;
+                 i.compareTo(power) != 0; i = i.add(BigInteger.ONE)) {
+                result = result.multiply(base);
+            }
         }
 
         public BigInteger getResult() {
